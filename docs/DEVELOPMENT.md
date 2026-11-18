@@ -23,6 +23,16 @@ A copy started with `RETRO_APPDIR` set to another folder runs as its own instanc
 
 Rendering defaults to software Skia. On this app it measured ~0.6% idle CPU and ~67 MB private memory, versus ~16% and ~286 MB with ANGLE/D3D. Set `RETRO_RENDER=gpu` to use the GPU instead.
 
+## Linux
+
+`dotnet run --project src/Retrograde.App` on Linux builds `net10.0` (the Windows SDK projection, SMTC and taskbar buttons are left out). Needs the `mpv` package (libmpv.so.2): `sudo pacman -S mpv`.
+
+- Output: `ao=pipewire,alsa`. WASAPI exclusive does not exist here, so its toggle is hidden.
+- Media keys / widgets: MPRIS on the session bus (`Services/Mpris.cs`, name `org.mpris.MediaPlayer2.retrograde`); try `playerctl -p retrograde status`.
+- Rendering: software Skia by default; `RETRO_RENDER=gpu` tries GLX/EGL.
+- `dotnet publish src/Retrograde.App -c Release -o out` is Native AOT on Linux (needs clang and lld; ~44 MB). Measured after scanning 46 albums: ~150-155 MB PSS, against ~182 MB for the trimmed JIT build.
+- Measure memory as PSS: `grep Pss /proc/$(pgrep -n Retrograde)/smaps_rollup`.
+
 ## Publish
 
 ```bash

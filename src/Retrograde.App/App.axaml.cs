@@ -35,8 +35,12 @@ public partial class App : Application
             _vm.HideRequested += () => _window.Hide();
             _vm.QuitRequested += Quit;
             CreateTray();
+#if WINDOWS
             MediaControls.TryAttach(_window, _vm.Player);
             _window.Opened += (_, _) => TaskbarButtons.Attach(_window, _vm.Player);
+#else
+            Mpris.Start(_vm.Player, () => Dispatcher.UIThread.Post(() => _window.Reveal()), Quit);
+#endif
             AccentTheme.Init(_vm.AccentFromCover);
             _vm.Player.TrackChanged += t => AccentTheme.Follow(t?.CoverFullPath ?? t?.CoverThumbPath);
             _vm.PropertyChanged += (_, e) =>
@@ -194,7 +198,11 @@ public partial class App : Application
         if (_quitting) return;
         _quitting = true;
         _vm?.Shutdown();               // saves settings, stops mpv
+#if WINDOWS
         MediaControls.Detach();
+#else
+        Mpris.Stop();
+#endif
         _mini?.Close();
         if (_window is not null)
         {

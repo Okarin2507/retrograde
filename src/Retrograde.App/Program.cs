@@ -25,6 +25,13 @@ internal static class Program
         AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .With(RenderOptions())
+            .With(new X11PlatformOptions
+            {
+                // RETRO_RENDER=gpu: GL; default CPU Skia (measure both with smem, PSS).
+                RenderingMode = string.Equals(Environment.GetEnvironmentVariable("RETRO_RENDER"), "gpu", StringComparison.OrdinalIgnoreCase)
+                    ? [X11RenderingMode.Glx, X11RenderingMode.Egl, X11RenderingMode.Software]
+                    : [X11RenderingMode.Software],
+            })
             .LogToTrace();
 
     // Software (CPU Skia) rendering by default: measured on this app it idles at ~0.6% CPU

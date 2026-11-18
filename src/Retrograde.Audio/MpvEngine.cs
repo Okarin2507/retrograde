@@ -85,7 +85,8 @@ public sealed class MpvEngine : IAsyncDisposable
     /// <param name="binDir">Folder holding libmpv-2.dll (preferred) and/or mpv.exe.</param>
     public MpvEngine(string binDir)
     {
-        _libPath = Path.Combine(binDir, "libmpv-2.dll");
+        // Windows: libmpv-2.dll next to the app; Linux: the system libmpv (mpv package).
+        _libPath = OperatingSystem.IsWindows() ? Path.Combine(binDir, "libmpv-2.dll") : "libmpv.so.2";
         _mpvPath = Path.Combine(binDir, "mpv.exe");
     }
 
@@ -100,8 +101,9 @@ public sealed class MpvEngine : IAsyncDisposable
         new("load-stats-overlay", "no"),
         new("load-auto-profiles", "no"),
         new("idle", "yes"),
-        new("ao", "wasapi"),
-        new("audio-exclusive", _exclusive ? "yes" : "no"),
+        new("ao", OperatingSystem.IsWindows() ? "wasapi" : "pipewire,alsa"),
+        // Exclusive output exists on WASAPI only; on Linux the setting maps to nothing.
+        new("audio-exclusive", _exclusive && OperatingSystem.IsWindows() ? "yes" : "no"),
         new("audio-device", _audioDevice),
         new("audio-client-name", "Retrograde"),
         new("input-media-keys", "no"),
@@ -138,6 +140,7 @@ public sealed class MpvEngine : IAsyncDisposable
             return;
         }
 
+        if (!OperatingSystem.IsWindows()) throw new FileNotFoundException("libmpv.so.2 not found: install the mpv package (pacman -S mpv)", _libPath);
         if (!File.Exists(_mpvPath)) throw new FileNotFoundException("libmpv-2.dll and mpv.exe not found", _mpvPath);
         // A new pipe name per start: a dying mpv may still hold the previous one.
         var pipeName = $"{_pipeBase}-{++_starts}";
@@ -563,7 +566,7 @@ public sealed class MpvEngine : IAsyncDisposable
         {
             var name = d.TryGetProperty("name", out var n) ? n.GetString() : null;
             // mpv lists every audio backend's devices; only wasapi ones work with --ao=wasapi.
-            if (string.IsNullOrEmpty(name) || (name != "auto" && !name.StartsWith("wasapi/", StringComparison.Ordinal))) continue;
+            if (string.IsNullOrEmpty(name) || (name != "auto" && !name.StartsWith(OperatingSystem.IsWindows() ? "wasapi/" : "pipewire/", StringComparison.Ordinal))) continue;
             var desc = d.TryGetProperty("description", out var de) ? de.GetString() : null;
             list.Add(new AudioDevice(name, string.IsNullOrEmpty(desc) ? name : desc));
         }

@@ -1227,14 +1227,14 @@
                         </Button>
                       </UniformGrid>
                       <TextBlock Text="{Binding ReplayGainHint}" Classes="mono" FontSize="9" Foreground="#7A7872" TextWrapping="Wrap" Margin="12,6,12,8" />
-                      <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,1" Padding="12,8" Margin="0,4,0,0">
+                      <Border IsVisible="{x:Static c:UiConverters.ExclusiveSupported}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,1" Padding="12,8" Margin="0,4,0,0">
                         <Grid ColumnDefinitions="*,Auto">
                           <TextBlock Text="WASAPI EXCLUSIVE" Classes="mono" FontSize="9" FontWeight="Bold" LetterSpacing="0.45" Foreground="{StaticResource Teal}" VerticalAlignment="Center" />
                           <Button Grid.Column="1" Classes="wasapi" Classes.on="{Binding IsExclusive}" Command="{Binding ToggleExclusiveCommand}"
                                   Content="{Binding IsExclusive, Converter={x:Static c:UiConverters.OnOff}}" ToolTip.Tip="WASAPI Exclusive Mode (Bit-perfect)" />
                         </Grid>
                       </Border>
-                      <TextBlock Text="BIT-PERFECT: THE DEVICE PLAYS THIS APP ONLY, AT THE FILE'S OWN RATE." Classes="mono" FontSize="9" Foreground="#7A7872" TextWrapping="Wrap" Margin="12,6,12,8" />
+                      <TextBlock IsVisible="{x:Static c:UiConverters.ExclusiveSupported}" Text="BIT-PERFECT: THE DEVICE PLAYS THIS APP ONLY, AT THE FILE'S OWN RATE." Classes="mono" FontSize="9" Foreground="#7A7872" TextWrapping="Wrap" Margin="12,6,12,8" />
                       </StackPanel>
                     </StackPanel>
                   </Flyout>

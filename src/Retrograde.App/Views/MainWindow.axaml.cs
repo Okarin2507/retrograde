@@ -119,8 +119,11 @@ public partial class MainWindow : Window
         if (!IsVisible) Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
-        Topmost = true;   // Windows only lets a background process take focus this way
-        Topmost = false;
+        if (OperatingSystem.IsWindows())
+        {
+            Topmost = true;   // Windows only lets a background process take focus this way
+            Topmost = false;
+        }
     }
 
     protected override void OnDataContextChanged(EventArgs e)

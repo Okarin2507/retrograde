@@ -7,6 +7,9 @@ namespace Retrograde.App.Controls;
 
 public static class UiConverters
 {
+    /// <summary>WASAPI exclusive output exists on Windows only; the toggle is hidden elsewhere.</summary>
+    public static bool ExclusiveSupported => OperatingSystem.IsWindows();
+
     private static readonly IBrush Orange = new SolidColorBrush(Color.Parse("#FF6B35"));
     private static readonly IBrush Gold = new SolidColorBrush(Color.Parse("#E8C060"));
 

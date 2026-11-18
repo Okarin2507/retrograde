@@ -31,7 +31,9 @@ internal sealed unsafe class LibMpvClient : IDisposable
         lock (LoadLock)
         {
             if (_libHandle != IntPtr.Zero) return true;
-            if (!File.Exists(dllPath) || !NativeLibrary.TryLoad(dllPath, out var handle)) return false;
+            // A path (Windows, next to the app) must exist; a bare soname (Linux) is left to the loader.
+            if (Path.IsPathRooted(dllPath) && !File.Exists(dllPath)) return false;
+            if (!NativeLibrary.TryLoad(dllPath, out var handle)) return false;
             _libHandle = handle;
             try
             {
