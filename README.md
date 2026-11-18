@@ -1,9 +1,9 @@
 # Retrograde // Music Player
 <div align="center">
 
-![Version](https://img.shields.io/badge/VERSION-2.1.0-4FD6BE?style=for-the-badge&logo=appveyor)
-![Platform](https://img.shields.io/badge/PLATFORM-WINDOWS%20%7C%20.NET%20%2B%20AVALONIA-E8C060?style=for-the-badge)
-![Release](https://img.shields.io/badge/PACKAGE-.EXE%20INSTALLER-0078D4?style=for-the-badge&logo=windows)
+![Version](https://img.shields.io/badge/VERSION-2.2.0-4FD6BE?style=for-the-badge&logo=appveyor)
+![Platform](https://img.shields.io/badge/PLATFORM-LINUX%20%7C%20.NET%20%2B%20AVALONIA-E8C060?style=for-the-badge&logo=linux&logoColor=white)
+![Release](https://img.shields.io/badge/PACKAGE-NATIVE%20AOT-0078D4?style=for-the-badge)
 ![License](https://img.shields.io/badge/LICENSE-MIT-white?style=for-the-badge)
 
 <p align="center">
@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Misaka545/retrograde/releases"><b>⬇️ Download Latest Windows Installer (.exe)</b></a>
+  <a href="https://github.com/Okarin2507/retrograde/releases"><b>⬇️ Download Latest Release (Linux x64 / Windows x64)</b></a>
 </p>
 
 </div>
@@ -23,6 +23,17 @@
 | **Library Grid View** | **Full Screen Player** |
 |:---:|:---:|
 | ![Library View](./docs/LibraryGrid.png) | ![Player View](./docs/FullScreen.png) |
+
+---
+
+## About this fork
+
+This is a **Linux-focused fork** of [Misaka545/retrograde](https://github.com/Misaka545/retrograde). The Linux build is the one that gets maintained and tested first; the Windows build is kept compiling from the same tree but comes second.
+
+* **Native AOT:** Release builds on Linux are Native AOT (no JIT, ~44 MB, ~150 MB PSS after scanning a 350-track library).
+* **PipeWire output:** mpv runs in-process through the system `libmpv.so.2` with `ao=pipewire,alsa`. WASAPI exclusive is Windows only and hidden here.
+* **MPRIS:** media keys, `playerctl` and shell widgets (e.g. Noctalia) see title, artist, album, cover, position and can play, pause, skip and seek.
+* **Tray:** StatusNotifierItem through Avalonia.
 
 ---
 
@@ -84,10 +95,11 @@ The Electron build stays available at the [`v1-electron`](https://github.com/Mis
 * **Runtime:** [.NET 10](https://dotnet.microsoft.com/)
 * **UI Framework:** [Avalonia 12](https://avaloniaui.net/) with software Skia rendering
 * **MVVM:** [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet)
-* **Audio Engine Backend:** [mpv](https://mpv.io/): libmpv in-process, or `mpv.exe` over its JSON IPC protocol
+* **Audio Engine Backend:** [mpv](https://mpv.io/): libmpv in-process (PipeWire on Linux, WASAPI on Windows)
+* **Desktop integration:** MPRIS over D-Bus on Linux (Tmds.DBus.Protocol), SMTC on Windows
 * **Metadata Extraction:** [TagLib#](https://github.com/mono/taglib-sharp)
 * **Image Processing:** [SkiaSharp](https://github.com/mono/SkiaSharp)
-* **Installer:** [NSIS](https://nsis.sourceforge.io/)
+* **Packaging:** Native AOT tarball + `install.sh` on Linux, [NSIS](https://nsis.sourceforge.io/) on Windows
 
 ---
 
@@ -113,12 +125,16 @@ retrograde/
 
 ## Installation & Setup
 
-### Pre-built Windows Release (.exe)
-1. Head over to the [GitHub Releases](https://github.com/Misaka545/retrograde/releases) page.
-2. Download the latest installer: **`Retrograde Setup 2.1.0.exe`**.
-3. Run it. It installs per user (no admin prompt), and `mpv.exe` is bundled.
+### Linux (x64)
+1. Install mpv: `sudo pacman -S mpv` (any distro that ships `libmpv.so.2` works).
+2. Download `retrograde-<version>-linux-x64.tar.gz` from [Releases](https://github.com/Okarin2507/retrograde/releases), extract it and run:
+   ```bash
+   ./install.sh
+   ```
+   This installs to `~/.local/opt/retrograde`, adds a launcher in `~/.local/bin` and an entry in the app drawer. `./install.sh uninstall` removes it and keeps `~/.retrograde`.
 
-**Upgrading from 1.x:** uninstall the Electron build first (Windows Settings > Apps > Retrograde); setup will ask you to if it finds it. Your library, playlists and favorites in `%USERPROFILE%\.retrograde` are kept and picked up by 2.0.
+### Windows (x64, secondary)
+Download `retrograde-<version>-win-x64.zip`, extract it, and put `libmpv-2.dll` (or `mpv.exe`) in a `bin` folder next to `Retrograde.exe`. This build is cross-published from Linux and not regularly tested. The NSIS installer of the original project still builds with `installer/build.ps1` on Windows.
 
 ---
 
@@ -126,9 +142,8 @@ retrograde/
 
 #### Prerequisites
 * **.NET 10 SDK**
-* **Windows 10/11**
-* **MPV Binary:** a Windows build of `mpv.exe` (from [mpv.io](https://mpv.io/) or [shinchiro's builds](https://sourceforge.net/projects/mpv-player-windows/files/)) in `bin/` at the repository root.
-* **NSIS** (only for the installer)
+* **Linux:** `mpv` (libmpv.so.2), plus `clang` and `lld` for the Native AOT publish.
+* **Windows (optional):** `libmpv-2.dll` or `mpv.exe` in `bin/` at the repository root, and NSIS for the installer.
 
 #### Instructions
 
@@ -138,21 +153,16 @@ retrograde/
    cd retrograde
    ```
 
-2. **Add mpv**
-   ```
-   retrograde/bin/mpv.exe
-   ```
-
-3. **Run**
+2. **Run**
    ```bash
    dotnet run --project src/Retrograde.App
    ```
 
-4. **Build the Installer (.exe)**
+3. **Publish (Linux, Native AOT)**
    ```bash
-   powershell -ExecutionPolicy Bypass -File installer/build.ps1
+   dotnet publish src/Retrograde.App -c Release -o out
    ```
-   *This publishes a trimmed, self-contained Release build and packs it with NSIS into `release/Retrograde Setup <version>.exe`.*
+   Windows from Linux: add `-p:RetroWindows=true -p:EnableWindowsTargeting=true`. On Windows, `installer/build.ps1` builds the NSIS installer.
 
 More details (layout, publish options, test tools) are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
@@ -183,3 +193,5 @@ More details (layout, publish options, test tools) are in [docs/DEVELOPMENT.md](
 This project is licensed under the [MIT License](LICENSE.md).
 
 Copyright (c) 2025 Misaka
+
+Linux port: Okarin2507

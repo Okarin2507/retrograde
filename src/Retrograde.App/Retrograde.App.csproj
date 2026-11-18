@@ -1,20 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Windows build when run on Windows, or anywhere with -p:RetroWindows=true -p:EnableWindowsTargeting=true (cross publish). -->
+  <PropertyGroup>
+    <RetroWindows Condition="'$(RetroWindows)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">true</RetroWindows>
+  </PropertyGroup>
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!-- Windows 10 SDK projection for System Media Transport Controls (media keys, Windows media card) -->
-    <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows10.0.19041.0</TargetFramework>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::IsOSPlatform('Windows'))">10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetFramework Condition="'$(RetroWindows)' == 'true'">net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion Condition="'$(RetroWindows)' == 'true'">10.0.17763.0</SupportedOSPlatformVersion>
     <!-- Linux: no Windows SDK projection; media keys go through MPRIS (Services/Mpris.cs) -->
-    <TargetFramework Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
+    <TargetFramework Condition="'$(RetroWindows)' != 'true'">net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <!-- Services/TaskbarButtons calls ITaskbarList3 through its vtable (no built-in COM interop, trim-safe) -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <ApplicationManifest Condition="$([MSBuild]::IsOSPlatform('Windows'))">app.manifest</ApplicationManifest>
+    <ApplicationManifest Condition="'$(RetroWindows)' == 'true'">app.manifest</ApplicationManifest>
     <AssemblyName>Retrograde</AssemblyName>
     <!-- Shown in the title bar; installer/build.ps1 overrides it with -p:Version. -->
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <Product>Retrograde</Product>
     <AssemblyTitle>Retrograde</AssemblyTitle>
     <RootNamespace>Retrograde.App</RootNamespace>
@@ -27,11 +31,11 @@
        Fallback below works without it: trimmed, self-contained ReadyToRun with tiered
        compilation off, so precompiled code is used as-is and never re-JITted in the background. -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="!$([MSBuild]::IsOSPlatform('Windows'))">linux-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RetroWindows)' == 'true'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RetroWindows)' != 'true'">linux-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <!-- Linux: Native AOT (clang + lld; measured ~30 MB less PSS and no JIT). Windows keeps trimmed ReadyToRun. -->
-    <PublishAot Condition="!$([MSBuild]::IsOSPlatform('Windows'))">true</PublishAot>
+    <PublishAot Condition="'$(RetroWindows)' != 'true'">true</PublishAot>
     <PublishTrimmed>true</PublishTrimmed>
     <PublishReadyToRun Condition="'$(PublishAot)' != 'true'">true</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
@@ -54,7 +58,7 @@
   <ItemGroup>
     <TrimmerRootAssembly Include="TagLibSharp" />
   </ItemGroup>
-  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+  <ItemGroup Condition="'$(RetroWindows)' != 'true'">
     <Compile Remove="Services\MediaControls.cs;Services\TaskbarButtons.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
